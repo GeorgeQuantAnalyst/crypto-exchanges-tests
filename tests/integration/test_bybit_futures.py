@@ -1,5 +1,6 @@
 import unittest
 
+import requests
 from pybit import usdt_perpetual
 
 from exchanges.bybit_extend import BybitExtend
@@ -9,29 +10,97 @@ from utils import load_config
 class BybitFuturesTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        config = load_config("../config.yaml")
+        self.config = load_config("../config.yaml")
         self.exchange = BybitExtend({
-            "apiKey": config["bybitApi"]["apiKey"],
-            "secret": config["bybitApi"]["secretKey"]}
+            "apiKey": self.config["bybitApi"]["apiKey"],
+            "secret": self.config["bybitApi"]["secretKey"]}
         )
         self.pybit_client = usdt_perpetual.HTTP(
-            endpoint=config["bybitApi"]["url"],
-            api_key=config["bybitApi"]["apiKey"],
-            api_secret=config["bybitApi"]["secretKey"]
+            endpoint=self.config["bybitApi"]["url"],
+            api_key=self.config["bybitApi"]["apiKey"],
+            api_secret=self.config["bybitApi"]["secretKey"]
         )
         self.exchange.set_sandbox_mode(True)
 
     def test_get_btc_current_price(self):
-        pass
+        url = "https://api-testnet.bybit.com/v5/market/orderbook?category={}&symbol={}"
+
+        payload = {}
+        headers = {}
+
+        response = requests.request("GET", url.format("linear", "BTCUSDT"), headers=headers, data=payload).json()
+        result = response["result"]
+        bid = float(result["b"][0][0])
+        ask = float(result["a"][0][0])
+        spread = ask - bid
+
+        print("Bid price is: {}, ask price is: {} and spread is: {}".format(bid, ask, spread))
+
+        self.assertEqual(response["retCode"], 0)
+        self.assertEqual(response["retMsg"], "OK")
+        self.assertTrue(bid > 0)
+        self.assertTrue(ask > 0)
+        self.assertTrue(bid < ask)
 
     def test_get_btc_daily_ohlc(self):
-        pass
+        url = "https://api-testnet.bybit.com/v5/market/kline?category={}&symbol={}&interval={}"
+
+        payload = {}
+        headers = {}
+
+        response = requests.request("GET", url.format("linear", "BTCUSDT", "D"), headers=headers, data=payload).json()
+        result = response["result"]
+        ohlc_daily = result["list"]
+
+        self.assertEqual(response["retCode"], 0)
+        self.assertEqual(response["retMsg"], "OK")
+        self.assertTrue(len(ohlc_daily) > 1)
 
     def test_get_instruments_info(self):
-        pass
+        url = "https://api-testnet.bybit.com/v5/market/instruments-info?category={}&symbol={}"
 
-    def test_get_available_balance_on_account(self):
-        pass
+        payload = {}
+        headers = {}
+
+        response = requests.request("GET", url.format("linear", "BTCUSDT", headers=headers, payload=payload)).json()
+        result = response["result"]
+
+        btc_info = result["list"][0]
+
+        print(btc_info)
+
+        self.assertEqual(response["retCode"], 0)
+        self.assertEqual(response["retMsg"], "OK")
+
+        # Base info
+        self.assertEqual(btc_info["symbol"], "BTCUSDT")
+        self.assertEqual(btc_info["contractType"], "LinearPerpetual")
+        self.assertEqual(btc_info["launchTime"], "1585526400000")
+        self.assertEqual(btc_info["priceScale"], "2")
+        self.assertEqual(btc_info["fundingInterval"], 480)
+        self.assertEqual(btc_info["settleCoin"], "USDT")
+
+        # Leverage filter
+        self.assertEqual(btc_info["leverageFilter"]["minLeverage"], "1")
+        self.assertEqual(btc_info["leverageFilter"]["maxLeverage"], "100.00")
+        self.assertEqual(btc_info["leverageFilter"]["leverageStep"], "0.01")
+
+        # Lot size filter
+        self.assertEqual(btc_info["lotSizeFilter"]["maxOrderQty"], "100.000")
+        self.assertEqual(btc_info["lotSizeFilter"]["minOrderQty"], "0.001")
+        self.assertEqual(btc_info["lotSizeFilter"]["qtyStep"], "0.001")
+
+    def test_get_available_usdt_balance_on_account(self):
+        response = self.exchange.fetch_balance({"coin": "USDT"})
+        total_balance = float(response["USDT"]["total"])
+        free_balance = float(response["USDT"]["free"])
+
+        print("Total balance: {} USDT, Free balance: {} USDT".format(round(total_balance, 2), round(free_balance, 2)))
+
+        self.assertEqual(response["info"]["retCode"], "0")
+        self.assertEqual(response["info"]["retMsg"], "OK")
+        self.assertTrue(total_balance >= 0)
+        self.assertTrue(free_balance >= 0)
 
     def test_buy_btc_by_market_order(self):
         response = self.exchange.create_order(symbol="BTCUSDT",
