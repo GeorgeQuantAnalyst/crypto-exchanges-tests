@@ -1,4 +1,9 @@
 bybitApi:
   url: https://api-testnet.bybit.com
-  apiKey: ***
-  secretKey: ***
+  apiKey:
+  secretKey:
+
+binanceApi:
+  url: https://testnet.binancefuture.com/en/futures/BTCUSDT
+  apiKey:
+  secretKey:
