@@ -202,8 +202,8 @@ class BybitFuturesTest(unittest.TestCase):
         self.assertTrue("id" in response)
         print("Finished test_sell_btc_by_limit_order")
 
-    def test_buy_btc_with_take_profit_and_stop_loss(self):
-        print("Start test_buy_btc_with_take_profit_and_stop_loss")
+    def test_buy_btc_by_stop_order_with_take_profit_and_stop_loss(self):
+        print("Start test_buy_btc_by_stop_order_with_take_profit_and_stop_loss")
         response = self.exchange.create_order(symbol="BTCUSDT",
                                               type="limit",
                                               side="buy",
@@ -217,7 +217,7 @@ class BybitFuturesTest(unittest.TestCase):
         print("Response: {}".format(response))
 
         self.assertTrue("id" in response)
-        print("Finished test_buy_btc_with_take_profit_and_stop_loss")
+        print("Finished test_buy_btc_by_stop_order_with_take_profit_and_stop_loss")
 
     def test_place_trailing_stop(self):
         print("Start test_place_trailing_stop")
@@ -258,8 +258,7 @@ class BybitFuturesTest(unittest.TestCase):
 
         print("Finished test_get_open_positions")
 
-    def test_get_pending_orders(self):  # TODO: @Jirka: Please check me after implementation
-        # TODO: @Lucka
+    def test_get_pending_orders(self):
         print("Start test_get_pending_orders")
 
         print("Create small limit orders on BTC and ETH")
@@ -269,18 +268,16 @@ class BybitFuturesTest(unittest.TestCase):
         self.create_small_eth_long_position("limit", 1500)
 
         print("Get pending orders")
-        pending_orders = self.exchange.fetch_open_orders()  # TODO: implement me
+        pending_orders = self.exchange.fetch_open_orders()
         print("Pending orders: {}".format(pending_orders))
 
-        # TODO: write asserts on response (result), exists 2 open orders, btc and eth
         self.assertEqual(len(pending_orders), 2)
         self.assertEqual(pending_orders[0]["symbol"], "BTC/USDT:USDT")
         self.assertEqual(pending_orders[1]["symbol"], "ETH/USDT:USDT")
 
         print("Finished test_get_pending_orders")
 
-    def test_cancel_all_pending_orders(self): # TODO: @Jirka: Please check me after implementation
-        # TODO: @Lucka
+    def test_cancel_all_pending_orders(self):
         print("Start test_cancel_all_pending_orders")
 
         print("Create small limit orders on BTC and ETH")
@@ -290,10 +287,9 @@ class BybitFuturesTest(unittest.TestCase):
         self.create_small_eth_long_position("limit", 1500)
 
         print("Get pending orders")
-        pending_orders = self.exchange.fetch_open_orders()  # TODO: implement me
+        pending_orders = self.exchange.fetch_open_orders()
         print("Pending response orders: {}".format(pending_orders))
 
-        # TODO: write asserts on response (result), exists 2 open orders, btc and eth
         self.assertEqual(len(pending_orders), 2)
         self.assertEqual(pending_orders[0]["symbol"], "BTC/USDT:USDT")
         self.assertEqual(pending_orders[1]["symbol"], "ETH/USDT:USDT")
@@ -303,15 +299,14 @@ class BybitFuturesTest(unittest.TestCase):
         print("Cancel orders response: {}".format(cancel_orders_response))
 
         print("Get pending orders")
-        pending_orders_response = self.exchange.fetch_open_orders()  # TODO: implement me
+        pending_orders_response = self.exchange.fetch_open_orders()
         print("Pending orders response: {}".format(pending_orders_response))
 
-        # TODO: verify not open any pending orders
         self.assertEqual(len(pending_orders_response), 0)
 
         print("Finished test_cancel_all_pending_orders")
 
-    def test_cancel_all_positions(self): # TODO: @Jirka: Please check me after implementation
+    def test_cancel_all_positions(self):
         print("Start test_cancel_all_positions")
 
         print("Create small positions on BTC and ETH")
@@ -326,7 +321,7 @@ class BybitFuturesTest(unittest.TestCase):
         self.assertEqual(positions[0]["symbol"], "BTC/USDT:USDT")
         self.assertEqual(positions[1]["symbol"], "ETH/USDT:USDT")
 
-        print("Cancel all positions")  # TODO: @Lucka implement me
+        print("Cancel all positions")
         for position in positions:
             position_info = position["info"]
             self.exchange.create_order(symbol=position_info["symbol"],
@@ -341,7 +336,6 @@ class BybitFuturesTest(unittest.TestCase):
         positions = self.exchange.fetch_derivatives_positions()
         print("Positions: {}".format(positions))
 
-        # TODO: @Lucka verify 0 positions on exchange
         self.assertEqual(len(positions), 0)
 
         print("Finished test_cancel_all_positions")
