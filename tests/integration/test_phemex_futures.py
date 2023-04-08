@@ -152,19 +152,73 @@ class PhemexFuturesTest(unittest.TestCase):
         print("Finished test_get_available_usdt_balance_on_account")
 
     def test_buy_btc_by_market_order(self) -> None:
-        pass
+        print("Start test_buy_btc_by_market_order")
+        response = self.exchange.create_order(symbol="BTCUSDT",
+                                              type="market",
+                                              side="buy",
+                                              amount=0.001)
+        print("Response: {}".format(response))
+
+        self.assertTrue("orderID" in response["info"])
+        print("Finished test_buy_btc_by_market_order")
 
     def test_sell_btc_by_market_order(self):
-        pass
+        print("Start test_sell_btc_by_market_order")
+        response = self.exchange.create_order(symbol="BTCUSDT",
+                                              type="market",
+                                              side="sell",
+                                              amount=0.001)
+        print("Response: {}".format(response))
+
+        self.assertTrue("orderID" in response["info"])
+        print("Finished test_sell_btc_by_market_order")
 
     def test_buy_btc_by_limit_order(self):
-        pass
+        print("Start test_buy_btc_by_limit_order")
+        response = self.exchange.create_order(symbol="BTCUSDT",
+                                              type="limit",
+                                              side="buy",
+                                              amount=0.001,
+                                              price=20000)
+        print("Response: {}".format(response))
+
+        self.assertTrue("orderID" in response["info"])
+        print("Finished test_buy_btc_by_limit_order")
 
     def test_sell_btc_by_limit_order(self):
-        pass
+        print("Start test_sell_btc_by_limit_order")
+        response = self.exchange.create_order(symbol="BTCUSDT",
+                                              type="limit",
+                                              side="sell",
+                                              amount=0.001,
+                                              price=30000)
+        print("Response: {}".format(response))
+
+        self.assertTrue("orderID" in response["info"])
+
+        print("Finished test_sell_btc_by_limit_order")
 
     def test_buy_btc_by_stop_order_with_take_profit_and_stop_loss(self):
-        pass
+        print("Start test_buy_btc_by_stop_order_with_take_profit_and_stop_loss")
+
+        markets = self.exchange.load_markets()
+        market = markets["BTC/USDT"]
+
+        # TODO: Jirka solve error ccxt.base.errors.InvalidOrder: phemex {"code":11046,"msg":"TE_TRIGGER_PRICE_TOO_SMALL","data":null}
+        print("stopPxEp: {}".format(self.exchange.to_ep("25000", market)))
+        response = self.exchange.create_order(symbol="BTCUSDT",
+                                              type="LimitIfTouched",
+                                              side="buy",
+                                              amount=0.001,
+                                              price=25000,
+                                              params={
+                                                  "stopPxEp": self.exchange.to_ep("25000", market),
+                                                  "priceEp": self.exchange.to_ep("25000", market),
+                                                  "triggerType": "ByLastPrice"})
+        print("Response: {}".format(response))
+
+        self.assertTrue("orderID" in response["info"])
+        print("Finished test_buy_btc_by_stop_order_with_take_profit_and_stop_loss")
 
     def test_place_trailing_stop(self):
         pass
