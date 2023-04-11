@@ -201,26 +201,49 @@ class PhemexFuturesTest(unittest.TestCase):
     def test_buy_btc_by_stop_order_with_take_profit_and_stop_loss(self):
         print("Start test_buy_btc_by_stop_order_with_take_profit_and_stop_loss")
 
-        markets = self.exchange.load_markets()
-        market = markets["BTC/USDT"]
-
-        # TODO: Jirka solve error ccxt.base.errors.InvalidOrder: phemex {"code":11046,"msg":"TE_TRIGGER_PRICE_TOO_SMALL","data":null}
-        print("stopPxEp: {}".format(self.exchange.to_ep("25000", market)))
-        response = self.exchange.create_order(symbol="BTCUSDT",
+        # Warning: Not documented Rp attributes, but limit orders use priceRp attribute and stopPxEp not working
+        response = self.exchange.create_order(symbol="BTC/USDT:USDT",
                                               type="LimitIfTouched",
                                               side="buy",
                                               amount=0.001,
-                                              price=25000,
+                                              price=20000,
                                               params={
-                                                  "stopPxEp": self.exchange.to_ep("25000", market),
-                                                  "priceEp": self.exchange.to_ep("25000", market),
-                                                  "triggerType": "ByLastPrice"})
+                                                  "stopPxRp": 20000,
+                                                  "triggerType": "ByLastPrice",
+                                                  "takeProfitRp": 20100,
+                                                  "stopLossRp": 19900})
         print("Response: {}".format(response))
 
         self.assertTrue("orderID" in response["info"])
         print("Finished test_buy_btc_by_stop_order_with_take_profit_and_stop_loss")
 
     def test_place_trailing_stop(self):
+        print("Start test_place_trailing_stop")
+
+        print("Buy small btc position")
+        buy_market_response = self.exchange.create_order(symbol="BTC/USDT:USDT",
+                                                         type="market",
+                                                         side="buy",
+                                                         amount=0.001)
+        print("Buy market response: {}".format(buy_market_response))
+
+        print("Place trailing stop")
+        # TODO: error close position after hit trigger price not trailing
+        trailing_stop_response = self.exchange.create_order(symbol="BTC/USDT:USDT",
+                                                            type="Stop",
+                                                            side="sell",
+                                                            amount=0,
+                                                            params={
+                                                                "triggerType": "ByLastPrice",
+                                                                "stopPxRp": 30000,
+                                                                "timeInForce": "ImmediateOrCancel",
+                                                                "closeOnTrigger": True,
+                                                                "pegPriceType": "TrailingStopPeg",
+                                                                "pegOffsetValueRp": -1000}
+                                                            )
+        print("Trailing stop response: {}".format(trailing_stop_response))
+
+        print("Finished test_place_trailing_stop")
         pass
 
     def test_get_positions(self):
