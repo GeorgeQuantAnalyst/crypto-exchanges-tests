@@ -221,7 +221,7 @@ class PhemexFuturesTest(unittest.TestCase):
         print("Start test_place_trailing_stop")
 
         print("Buy small btc position")
-        buy_market_response = self.exchange.create_order(symbol="BTC/USDT:USDT",
+        buy_market_response = self.exchange.create_order(symbol="BTCUSDT",
                                                          type="market",
                                                          side="buy",
                                                          amount=0.001)
@@ -229,17 +229,17 @@ class PhemexFuturesTest(unittest.TestCase):
 
         print("Place trailing stop")
         # TODO: error close position after hit trigger price not trailing
-        trailing_stop_response = self.exchange.create_order(symbol="BTC/USDT:USDT",
-                                                            type="Stop",
+        trailing_stop_response = self.exchange.create_order(symbol="BTCUSDT",
+                                                            type="market",
                                                             side="sell",
-                                                            amount=0,
+                                                            amount=0.001,
                                                             params={
                                                                 "triggerType": "ByLastPrice",
-                                                                "stopPxRp": 30000,
-                                                                "timeInForce": "ImmediateOrCancel",
-                                                                "closeOnTrigger": True,
+                                                                # "stopPxRp": 29000,
+                                                                # "timeInForce": "ImmediateOrCancel",
+                                                                # "reduceOnly": True,
                                                                 "pegPriceType": "TrailingStopPeg",
-                                                                "pegOffsetValueRp": -1000}
+                                                                "pegOffsetValueRp": "-5000"}
                                                             )
         print("Trailing stop response: {}".format(trailing_stop_response))
 
@@ -247,28 +247,173 @@ class PhemexFuturesTest(unittest.TestCase):
         pass
 
     def test_get_positions(self):
-        pass
+        print("Start test_get_positions")
+
+        print("Create small positions on BTC and ETH")
+        self.exchange.create_order(symbol="BTC/USDT:USDT",
+                                   type="market",
+                                   side="buy",
+                                   amount=0.001)
+
+        self.exchange.create_order(symbol="ETH/USDT:USDT",
+                                   type="market",
+                                   side="buy",
+                                   amount=0.01)
+
+        print("Get positions")
+        positions = self.exchange.fetch_positions(symbols=["BTCUSDT", "ETHUSDT"])
+        print("Positions response: {}".format(positions))
+
+        active_positions = [x for x in positions if float(x["info"]["size"]) > 0]
+        self.assertEqual(len(active_positions), 2)
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in active_positions])
+        self.assertTrue("ETHUSDT" in [x["info"]["symbol"] for x in active_positions])
+
+        print("Finish test_get_positions")
 
     def test_get_pending_orders(self):
-        pass
+        print("Start test_get_pending_orders")
+
+        print("Create small limit orders on BTC and ETH")
+        self.exchange.create_order(symbol="BTC/USDT:USDT",
+                                   type="limit",
+                                   side="buy",
+                                   amount=0.001,
+                                   price=20000)
+
+        self.exchange.create_order(symbol="ETH/USDT:USDT",
+                                   type="limit",
+                                   side="buy",
+                                   amount=0.01,
+                                   price=1000)
+
+        print("Get pending orders")
+        pending_orders = self.exchange.fetch_open_orders(symbol="BTCUSDT") + self.exchange.fetch_open_orders(
+            symbol="ETHUSDT")
+        print("Pending orders: {}".format(pending_orders))
+
+        self.assertEqual(len(pending_orders), 2)
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in pending_orders])
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in pending_orders])
+
+        print("Finished test_get_pending_orders")
 
     def test_cancel_all_pending_orders(self):
-        pass
+        print("Start test_cancel_all_pending_orders")
+
+        print("Create small limit orders on BTC and ETH")
+        self.exchange.create_order(symbol="BTC/USDT:USDT",
+                                   type="limit",
+                                   side="buy",
+                                   amount=0.001,
+                                   price=20000)
+
+        self.exchange.create_order(symbol="ETH/USDT:USDT",
+                                   type="limit",
+                                   side="buy",
+                                   amount=0.01,
+                                   price=1000)
+
+        print("Get pending orders")
+        pending_orders = self.exchange.fetch_open_orders(symbol="BTCUSDT") + self.exchange.fetch_open_orders(
+            symbol="ETHUSDT")
+        print("Pending orders: {}".format(pending_orders))
+
+        self.assertEqual(len(pending_orders), 2)
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in pending_orders])
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in pending_orders])
+
+        print("Cancel all pending orders")
+        for ticker in ["BTCUSDT", "ETHUSDT"]:
+            cancel_orders_response = self.exchange.cancel_all_orders(symbol=ticker)
+            print("Cancel orders response for ticker {}: {}".format(ticker, cancel_orders_response))
+
+        print("Get pending orders")
+        pending_orders = self.exchange.fetch_open_orders(symbol="BTCUSDT") + self.exchange.fetch_open_orders(
+            symbol="ETHUSDT")
+        print("Pending orders: {}".format(pending_orders))
+
+        self.assertEqual(len(pending_orders), 0)
+
+        print("Finished test_cancel_all_pending_orders")
 
     def test_cancel_all_positions(self):
-        pass
+        print("Start test_cancel_all_positions")
+
+        print("Create small positions on BTC and ETH")
+        self.exchange.create_order(symbol="BTC/USDT:USDT",
+                                   type="market",
+                                   side="buy",
+                                   amount=0.001)
+
+        self.exchange.create_order(symbol="ETH/USDT:USDT",
+                                   type="market",
+                                   side="buy",
+                                   amount=0.01)
+
+        print("Get positions")
+        positions = self.exchange.fetch_positions(symbols=["BTCUSDT", "ETHUSDT"])
+        print("Positions response: {}".format(positions))
+
+        active_positions = [x for x in positions if float(x["info"]["size"]) > 0]
+        self.assertEqual(len(active_positions), 2)
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in active_positions])
+        self.assertTrue("ETHUSDT" in [x["info"]["symbol"] for x in active_positions])
+
+        print("Cancel all positions")
+        for position in positions:
+            position_info = position["info"]
+            self.exchange.create_order(symbol=position_info["symbol"],
+                                       type="market",
+                                       side="Sell" if position_info["side"] == "Buy" else "Buy",
+                                       amount=position_info["size"],
+                                       params={"reduceOnly": True})
+
+        print("Get positions")
+        positions = self.exchange.fetch_positions(symbols=["BTCUSDT", "ETHUSDT"])
+        print("Positions response: {}".format(positions))
+
+        active_positions = [x for x in positions if float(x["info"]["size"]) > 0]
+        self.assertEqual(len(active_positions), 0)
+
+        print("Finished test_cancel_all_positions")
 
     def test_set_hedge_mode(self):
-        pass
+        print("Start test_set_hedge_mode")
+        response = self.exchange.set_position_mode(hedged=False, symbol="BTCUSDT")
+        print("Response {}".format(response))
+
+        self.assertEqual(response["code"], "0")
+        self.assertEqual(response["data"], "ok")
+
+        print("Finished test_set_hedge_mode")
 
     def test_change_margin_mode_to_cross(self):
-        pass
+        print("Start test_change_margin_mode_to_cross")
+
+        raise Exception("Api actually not supported switch margin mode on USDT pairs - verify date 12.4.2023")
+
+        response = self.exchange.set_margin_mode(marginMode="cross", symbol="BTCUSDT")
+        print("Response: {}".format(response))
+
+        print("Finished test_change_margin_mode_to_cross")
 
     def test_change_leverage(self):
-        pass
+        print("Start test_change_leverage")
+
+        response = self.exchange.set_leverage(leverage=30, symbol="BTCUSDT")
+        print("Response: {}".format(response))
+
+        self.assertEqual(response["code"], "0")
+        self.assertEqual(response["data"], "OK")
+        print("Finished test_change_leverage")
 
     def test_change_buy_and_sell_leverage_in_hedge_mode(self):
-        pass
+        raise Exception(
+            """
+            Api actually not supported set buy and sell leverage, only allow set global leverage.
+            - verify date 12.4.2023
+            """)
 
     def set_default_setting(self) -> None:
         print("Set one-way trading mode")
