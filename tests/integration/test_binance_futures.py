@@ -20,11 +20,10 @@ class BinanceFuturesTest(unittest.TestCase):
         )
 
         self.exchange.set_sandbox_mode(True)
-        # self.set_default_setting()
+        self.set_default_setting()
 
         print("Finished SetUp")
 
-    # TODO: @ Lucka doupravit a dokoncit tak aby bylo funkcni
     def tearDown(self) -> None:
         print("Start Tear down")
 
@@ -43,39 +42,26 @@ class BinanceFuturesTest(unittest.TestCase):
         print("Finished cancel all pending orders")
 
         print("Cancel all positions")
+
         print("Get positions")
         response = self.exchange.fetch_positions()
-        print("Response: {}".format(response))
-
-        active_positions = [x for x in response if float(x["info"]["positionAmt"]) > 0]
+        print("Filtering active positions")
+        active_positions = [x for x in response if float(x["info"]["positionAmt"]) != 0]
         print("Active positions: {}".format(active_positions))
+        print("Finished get positions")
 
-        self.assertEqual(len(active_positions), 2)
-        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in active_positions])
-        self.assertTrue("ETHUSDT" in [x["info"]["symbol"] for x in active_positions])
+        print("Cancel all positions")
+        for position in active_positions:
+            position_info = position["info"]
+            self.exchange.create_order(symbol=position["symbol"],
+                                       type="market",
+                                       side="sell" if position["side"] == "long" else "buy",
+                                       amount=abs(float(position_info["positionAmt"])),
+                                       params={
+                                           "reduceOnly": True})
 
-        print("Finished get positions") # TODO: @lucka dokoncit metodu
-
-        # self.exchange.create_order(symbol=,
-        #                                    type="market",
-        #                                    side="short" if position["side"] == "long" else "long",
-        #                                    amount=position["side"],
-        #                                    params={
-        #                                        "reduceOnly": True})
-        #
-        # positions = self.exchange.fetch_derivatives_positions()
-        # for position in positions:
-        #     position_info = position["info"]
-        #     self.exchange.create_order(symbol=position_info["symbol"],
-        #                            type="market",
-        #                            side="Sell" if position_info["side"] == "Buy" else "Buy",
-        #                            amount=position_info["size"],
-        #                            params={
-        #                                "positionIdx": position_info["positionIdx"],
-        #                                "reduceOnly": True})
-        #
-        # self.set_default_setting()
-
+        print("Finished cancel all positions")
+        self.set_default_setting()
         print("Finished Tear down")
 
     def test_get_btc_current_price(self):
@@ -142,6 +128,21 @@ class BinanceFuturesTest(unittest.TestCase):
         response = self.exchange.fetch_balance({"type": "future"})
         print("Response: {}".format(response))
 
+        total_balance = float(response["USDT"]["total"])
+        free_balance = float(response["USDT"]["free"])
+        used_balance = float(response["USDT"]["used"])
+
+        print("Total balance is: {} USDT, Free balance is: {} USDT, Used balance is: {} USDT".format(
+            round(total_balance, 2),
+            round(free_balance, 2),
+            round(used_balance, 2)))
+
+        self.assertTrue(total_balance >= 0)
+        self.assertTrue(free_balance >= 0)
+        self.assertTrue(used_balance == 0)
+
+        print("Finished test_get_available_usdt_balance_on_account")
+
     def test_buy_btc_by_market_order(self):
         print("Start test_buy_btc_by_market_order")
         response = self.exchange.create_order(symbol="BTC/USDT:USDT",
@@ -195,7 +196,7 @@ class BinanceFuturesTest(unittest.TestCase):
         print("Finished test_sell_btc_by_limit_order")
 
     def test_buy_btc_with_take_profit_and_stop_loss(self):
-        # defaultne neni mozne zadat OTOCO order pres knihovnu ccxt
+        # defaultne neni mozne zadat OTOCO order pres api binance nutno zkusit jinak
 
         # self.exchange.create_order(symbol="BTC/USDT:USDT",
         #                            type="limit",
@@ -218,22 +219,48 @@ class BinanceFuturesTest(unittest.TestCase):
         pass
 
     def test_place_trailing_stop(self):
-        pass
+        print("Start test_place_trailing_stop")
+        print("Create small position on BTC")
+        self.create_small_btc_long_position()
 
-    def test_get_positions(self):  # TODO: @lucka dokoncit metodu
+        print("Get positions")
+        response = self.exchange.fetch_positions()
+        print("Response: {}".format(response))
+
+        print("Create trailing stop")
+        response = self.exchange.create_order(
+            symbol="BTC/USDT:USDT",
+            type="TRAILING_STOP_MARKET",
+            side="sell",
+            amount=0.001,
+            params={
+                "reduceOnly": True,
+                'callbackRate': 5
+            })
+
+        print("Response {}".format(response))
+        self.assertEqual(response["symbol"], "BTC/USDT:USDT")
+        self.assertEqual(response["info"]["status"], "NEW")
+        self.assertEqual(response["type"], "trailing_stop_market")
+        self.assertEqual(response["reduceOnly"], True)
+        self.assertEqual(response["timeInForce"], "GTC")
+        self.assertTrue(0.001, response["amount"])
+
+        print("Finished creating trailing stop")
+        print("Finished test_place_trailing_stop")
+
+    def test_get_positions(self):
         print("Start test_get_open_positions")
 
         print("Create small positions on BTC and ETH")
         self.create_small_btc_long_position()
-        self.create_small_eth_long_position()
+        self.create_small_eth_short_position()
 
         print("Get positions")
-        response = self.exchange.fetch_positions()  # ["BTC/USDT:USDT", "ETH/USDT:USDT", "SOL/USDT:USDT"]
+        response = self.exchange.fetch_positions()
         print("Response: {}".format(response))
 
-        # TODO: @lucka zjistit jak vyfilrovat otevrene pozice
-
-        active_positions = [x for x in response if float(x["info"]["positionAmt"]) > 0]
+        active_positions = [x for x in response if float(x["info"]["positionAmt"]) != 0]
         print("Active positions: {}".format(active_positions))
 
         self.assertEqual(len(active_positions), 2)
@@ -249,7 +276,7 @@ class BinanceFuturesTest(unittest.TestCase):
         # buy limit btc on 20 000 USD
         # buy limit eth on 1500 USD
         self.create_small_btc_long_position("limit", 20000)
-        self.create_small_eth_long_position("limit", 1500)
+        self.create_small_eth_short_position("limit", 2500)
 
         symbols = ["BTC/USDT:USDT", "ETH/USDT:USDT", "SOL/USDT:USDT"]
 
@@ -270,7 +297,7 @@ class BinanceFuturesTest(unittest.TestCase):
         # buy limit btc on 20 000 USD
         # buy limit eth on 1500 USD
         self.create_small_btc_long_position("limit", 20000)
-        self.create_small_eth_long_position("limit", 1500)
+        self.create_small_eth_short_position("limit", 2500)
 
         symbols = ["BTC/USDT:USDT", "ETH/USDT:USDT", "SOL/USDT:USDT"]
 
@@ -298,11 +325,36 @@ class BinanceFuturesTest(unittest.TestCase):
         print("Finished test_cancel_all_pending_orders")
 
     def test_cancel_all_positions(self):
-        print("Start test_get_open_positions")
+        print("Start test_cancel_all_positions")
 
         print("Create small positions on BTC and ETH")
         self.create_small_btc_long_position()
-        self.create_small_eth_long_position()
+        self.create_small_eth_short_position()
+
+        print("Get positions")
+        response = self.exchange.fetch_positions()
+        print("Response: {}".format(response))
+
+        active_positions = [x for x in response if float(x["info"]["positionAmt"]) != 0]
+        print("Active positions: {}".format(active_positions))
+
+        self.assertEqual(len(active_positions), 2)
+        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in active_positions])
+        self.assertTrue("ETHUSDT" in [x["info"]["symbol"] for x in active_positions])
+
+        print("Finished filtering active position")
+
+        print("Cancel all positions")
+        for position in active_positions:
+            position_info = position["info"]
+            self.exchange.create_order(symbol=position["symbol"],
+                                       type="market",
+                                       side="sell" if position["side"] == "long" else "buy",
+                                       amount=abs(float(position_info["positionAmt"])),
+                                       params={
+                                           "reduceOnly": True})
+
+        print("Finished cancel all positions")
 
         print("Get positions")
         response = self.exchange.fetch_positions()
@@ -311,22 +363,7 @@ class BinanceFuturesTest(unittest.TestCase):
         active_positions = [x for x in response if float(x["info"]["positionAmt"]) > 0]
         print("Active positions: {}".format(active_positions))
 
-        self.assertEqual(len(active_positions), 2)
-        self.assertTrue("BTCUSDT" in [x["info"]["symbol"] for x in active_positions])
-        self.assertTrue("ETHUSDT" in [x["info"]["symbol"] for x in active_positions])
-
-        print("Finished test_get_open_positions")
-
-        print("Cancel all positions")
-        # for x in active_positions:
-        # cancel_positions_response # TODO:dodelat
-        #   print("Cancel orders response: {}".format(cancel_positions_response))
-
-        print("Get positions")
-        positions_orders_response = self.exchange.fetch_positions()
-        print("Positions orders response: {}".format(positions_orders_response))
-
-        self.assertEqual(len(positions_orders_response), 0)
+        self.assertEqual(len(active_positions), 0)
 
         print("Finished test_cancel_all_positions")
 
@@ -370,7 +407,7 @@ class BinanceFuturesTest(unittest.TestCase):
         pass  # Binance ma pro long i short pozici stejnou leverage
 
     def create_small_btc_long_position(self, type_of_order="market",
-                                       limit_price=None):  # TODO: @lucka zkontrolovat metodu
+                                       limit_price=None):
         return self.exchange.create_order(symbol="BTC/USDT:USDT",
                                           type=type_of_order,
                                           side="buy",
@@ -378,33 +415,35 @@ class BinanceFuturesTest(unittest.TestCase):
                                           price=limit_price
                                           )
 
-    def create_small_eth_long_position(self, type_of_order="market",
-                                       limit_price=None):  # TODO: @lucka zkontrolovat metodu
+    def create_small_eth_short_position(self, type_of_order="market",
+                                        limit_price=None):
         return self.exchange.create_order(symbol="ETH/USDT:USDT",
                                           type=type_of_order,
-                                          side="buy",
+                                          side="sell",
                                           amount=0.01,
                                           price=limit_price,
                                           )
 
-    # TODO: @ Lucka doupravit a dokoncit tak aby bylo funkcni
     def set_default_setting(self):
-
-        print("Set one-way trading mode")
-        self.exchange.set_position_mode(hedged=False)
+        try:
+            print("Set one-way trading mode")
+            self.exchange.set_position_mode(hedged=False)
+        except Exception as e:
+            if "No need to change position side." not in str(e):
+                raise e
 
         print("Set isolated margin mode on BTC and default leverage")
 
         self.exchange.set_margin_mode(
             marginMode="ISOLATED",
             symbol="BTC/USDT:USDT"
-            )
+        )
 
         print("Set isolated margin mode on ETH and default leverage")
         self.exchange.set_margin_mode(
             marginMode="ISOLATED",
             symbol="ETH/USDT:USDT"
-            )
+        )
 
         print("Set default leverage for BTC")
         try:
