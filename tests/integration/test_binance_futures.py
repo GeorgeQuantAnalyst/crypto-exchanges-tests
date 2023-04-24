@@ -196,8 +196,7 @@ class BinanceFuturesTest(unittest.TestCase):
         print("Finished test_sell_btc_by_limit_order")
 
     def test_buy_btc_with_take_profit_and_stop_loss(self):
-        # defaultne neni mozne zadat OTOCO order pres api binance
-        pass
+        raise Exception("Api actually not supported this function - verify date 24.4.2023")
 
     def test_place_trailing_stop(self):
         print("Start test_place_trailing_stop")
@@ -385,7 +384,7 @@ class BinanceFuturesTest(unittest.TestCase):
         print("Finished test_change_leverage")
 
     def test_change_buy_and_sell_leverage_in_hedge_mode(self):
-        pass  # Binance ma pro long i short pozici stejnou leverage
+        raise Exception("Api actually not supported this function - verify date 24.4.2023")
 
     def create_small_btc_long_position(self, type_of_order="market",
                                        limit_price=None):
