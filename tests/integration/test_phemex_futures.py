@@ -243,8 +243,10 @@ class PhemexFuturesTest(unittest.TestCase):
                                                             )
         print("Trailing stop response: {}".format(trailing_stop_response))
 
+        self.assertTrue("orderID" in trailing_stop_response["info"])
+        self.assertEqual(trailing_stop_response["info"]["bizError"], "0")
+
         print("Finished test_place_trailing_stop")
-        pass
 
     def test_get_positions(self):
         print("Start test_get_positions")
