@@ -2,3 +2,6 @@ bybitApi:
   url: https://api-testnet.bybit.com
   apiKey: ***
   secretKey: ***
+phemexApi:
+  apiKey: ***
+  secretKey: ***
