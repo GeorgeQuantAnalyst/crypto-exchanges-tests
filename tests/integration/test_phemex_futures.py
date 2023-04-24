@@ -228,18 +228,18 @@ class PhemexFuturesTest(unittest.TestCase):
         print("Buy market response: {}".format(buy_market_response))
 
         print("Place trailing stop")
-        # TODO: error close position after hit trigger price not trailing
         trailing_stop_response = self.exchange.create_order(symbol="BTCUSDT",
-                                                            type="market",
+                                                            type="Stop",
                                                             side="sell",
-                                                            amount=0.001,
+                                                            amount=0,
                                                             params={
                                                                 "triggerType": "ByLastPrice",
-                                                                # "stopPxRp": 29000,
-                                                                # "timeInForce": "ImmediateOrCancel",
-                                                                # "reduceOnly": True,
+                                                                "stopPxRp": 26500,  # Stop loss price
+                                                                "timeInForce": "ImmediateOrCancel",
+                                                                "closeOnTrigger": True,
                                                                 "pegPriceType": "TrailingStopPeg",
-                                                                "pegOffsetValueRp": "-5000"}
+                                                                "pegOffsetValueRp": "-500"  # Entry - stop loss price
+                                                            }
                                                             )
         print("Trailing stop response: {}".format(trailing_stop_response))
 
