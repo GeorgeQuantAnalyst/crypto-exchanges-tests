@@ -1,7 +1,8 @@
 bybitApi:
   url: https://api-testnet.bybit.com
-  apiKey: ***
-  secretKey: ***
+  apiKey:
+  secretKey:
 phemexApi:
-  apiKey: ***
-  secretKey: ***
+  apiKey:
+  secretKey:
+
