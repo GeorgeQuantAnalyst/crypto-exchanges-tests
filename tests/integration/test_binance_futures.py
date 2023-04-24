@@ -196,26 +196,7 @@ class BinanceFuturesTest(unittest.TestCase):
         print("Finished test_sell_btc_by_limit_order")
 
     def test_buy_btc_with_take_profit_and_stop_loss(self):
-        # defaultne neni mozne zadat OTOCO order pres api binance nutno zkusit jinak
-
-        # self.exchange.create_order(symbol="BTC/USDT:USDT",
-        #                            type="limit",
-        #                            side="buy",
-        #                            amount=0.001,
-        #                            price=20000
-        #                            )
-        #
-        # self.exchange.create_order(symbol="BTC/USDT:USDT",
-        #                            type="limit",
-        #                            side="sell",
-        #                            amount=0.001,
-        #                            price=19000,
-        #                             {'stopPrice': 19001})
-        #
-        #
-        # self.exchange.create_order(symbol, 'market', 'sell', amount, None, {'stopPrice': takeProfitPrice})
-        # ppring(tp)
-
+        # defaultne neni mozne zadat OTOCO order pres api binance
         pass
 
     def test_place_trailing_stop(self):
@@ -274,7 +255,7 @@ class BinanceFuturesTest(unittest.TestCase):
 
         print("Create small limit orders on BTC and ETH")
         # buy limit btc on 20 000 USD
-        # buy limit eth on 1500 USD
+        # sell limit eth on 2500 USD
         self.create_small_btc_long_position("limit", 20000)
         self.create_small_eth_short_position("limit", 2500)
 
@@ -295,7 +276,7 @@ class BinanceFuturesTest(unittest.TestCase):
 
         print("Create small limit orders on BTC and ETH")
         # buy limit btc on 20 000 USD
-        # buy limit eth on 1500 USD
+        # sell limit eth on 2500 USD
         self.create_small_btc_long_position("limit", 20000)
         self.create_small_eth_short_position("limit", 2500)
 
