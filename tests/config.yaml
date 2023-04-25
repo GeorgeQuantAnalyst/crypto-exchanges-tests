@@ -1,5 +1,5 @@
 bybitApi:
-  url: https://api-testnet.bybit.com
+  testnet: True
   apiKey:
   secretKey:
 phemexApi:
