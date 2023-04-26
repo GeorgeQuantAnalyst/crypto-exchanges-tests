@@ -18,7 +18,7 @@ class BybitFuturesTest(unittest.TestCase):
         self.exchange = HTTP(
             testnet=self.config["bybitApi"]["testnet"],
             api_key=self.config["bybitApi"]["apiKey"],
-            api_secret=self.config["bybitApi"]["secretKey"],
+            api_secret=self.config["bybitApi"]["secretKey"]
         )
 
         self.set_default_setting()
